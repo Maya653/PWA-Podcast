@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; margin: 16px; color: #222; }
+header { display:flex; justify-content:space-between; align-items:center; }
+.hidden { display:none; }
+section { margin-top:20px; padding:12px; border:1px solid #ddd; border-radius:8px; }
+button { margin:6px; padding:8px 12px; border-radius:6px; border: none; background:#1e88e5; color:#fff; cursor:pointer; }
+input { margin:6px 6px 6px 0; padding:8px; }
+ul { list-style:none; padding-left:0; }
+li { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Podcasts PWA - Curso</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Podcasts PWA — Laboratorio</h1>
+    <button id="installBtn" class="hidden">Instalar PWA</button>
+  </header>
+
+  <main>
+    <section id="uploadSection">
+      <h2>Agregar episodio</h2>
+      <input id="title" placeholder="Título" />
+      <input id="author" placeholder="Autor" />
+      <input id="file" type="file" accept="audio/*" />
+      <button id="addBtn">Guardar episodio</button>
+    </section>
+
+    <section id="listSection">
+      <h2>Episodios</h2>
+      <ul id="episodes"></ul>
+    </section>
+
+    <section id="playerSection">
+      <h2>Reproductor</h2>
+      <audio id="audio" controls></audio>
+      <div id="nowPlaying"></div>
+    </section>
+
+    <section id="notifySection">
+      <h2>Notificaciones (actividad)</h2>
+      <button id="requestPermission">Solicitar permiso</button>
+      <button id="testNotify">Probar notificación ahora</button>
+      <button id="scheduleNotify">Programar notificación (30s)</button>
+    </section>
+  </main>
+
+  <script src="idb.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
