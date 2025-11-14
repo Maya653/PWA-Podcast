@@ -7,6 +7,7 @@ const nowPlaying = document.getElementById('nowPlaying');
 const requestPermissionBtn = document.getElementById('requestPermission');
 const testNotifyBtn = document.getElementById('testNotify');
 const scheduleNotifyBtn = document.getElementById('scheduleNotify');
+const subscribePushBtn = document.getElementById('subscribePush');
 
 async function renderEpisodes() {
   episodesList.innerHTML = '';
@@ -103,22 +104,63 @@ scheduleNotifyBtn.addEventListener('click', () => {
     }
   }, 30000);
 });
+
+// ===== NUEVO: Suscripción a Push Notifications desde el servidor =====
+subscribePushBtn.addEventListener('click', async () => {
+  if (Notification.permission !== 'granted') {
+    alert('Primero debes conceder permiso para notificaciones');
+    return;
+  }
+  
+  const success = await suscribirUsuario();
+  if (success) {
+    subscribePushBtn.textContent = '✅ Suscrito a Push';
+    subscribePushBtn.disabled = true;
+  }
+});
+
 async function suscribirUsuario() {
-    const registro = await navigator.serviceWorker.ready;
+    try {
+        // Obtener la clave pública del servidor
+        const response = await fetch('/vapid-public-key');
+        const { publicKey } = await response.json();
+        
+        const registro = await navigator.serviceWorker.ready;
 
-    const suscripcion = await registro.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array("BE8bR5ohmXms2L1bCmligkLcDJdWlDlnv7LkGP1gI-4wOkSEjOmcgaEDEsaatVJkFV57a_5YNtQj2HhG_v_8_XA")
-    });
+        // Verificar si ya existe una suscripción
+        let suscripcion = await registro.pushManager.getSubscription();
+        
+        if (!suscripcion) {
+            // Crear nueva suscripción
+            suscripcion = await registro.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
+            console.log("✅ Nueva suscripción creada");
+        } else {
+            console.log("ℹ️ Ya existe una suscripción activa");
+        }
 
-    console.log("Suscripción:", JSON.stringify(suscripcion));
+        console.log("Suscripción:", JSON.stringify(suscripcion));
 
-    // Enviar al servidor la suscripción
-    await fetch("/suscribir", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(suscripcion)
-    });
+        // Enviar al servidor la suscripción
+        const envio = await fetch("/suscribir", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(suscripcion)
+        });
+
+        if (envio.ok) {
+            alert('¡Suscripción exitosa! Ahora puedes recibir notificaciones del servidor.');
+            return true;
+        } else {
+            throw new Error('Error al registrar suscripción en el servidor');
+        }
+    } catch (error) {
+        console.error('Error en suscripción:', error);
+        alert('Error al suscribirse: ' + error.message);
+        return false;
+    }
 }
 
 // Función para convertir el Base64 a Uint8Array
@@ -134,7 +176,22 @@ function urlBase64ToUint8Array(base64String) {
     for (let i = 0; i < rawData.length; ++i) {
         outputArray[i] = rawData.charCodeAt(i);
     }
-    return outputArray;
+    return outputArray;
 }
+
+// Verificar estado de suscripción al cargar
+async function checkSubscriptionStatus() {
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (subscription) {
+      subscribePushBtn.textContent = '✅ Ya estás suscrito';
+      subscribePushBtn.disabled = true;
+    }
+  }
+}
+
 // inicializar UI
 renderEpisodes();
+checkSubscriptionStatus();

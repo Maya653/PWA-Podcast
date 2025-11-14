@@ -61,28 +61,49 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientsArr => {
-      const urlToOpen = event.notification.data;
+      const urlToOpen = event.notification.data.url || '/';
       const hadWindow = clientsArr.some(windowClient => {
-        if (windowClient.url === urlToOpen && 'focus' in windowClient) {
+        if (windowClient.url.includes(urlToOpen.split('?')[0]) && 'focus' in windowClient) {
           windowClient.focus();
           return true;
         }
+        return false;
       });
-      if (!hadWindow && urlToOpen) {
+      if (!hadWindow) {
         self.clients.openWindow(urlToOpen);
       }
     })
   );
 });
 
-// Ajuste para manejar notificaciones push y mensajes
+// Manejar notificaciones push desde el servidor
 self.addEventListener("push", event => {
-    const data = event.data.json();
+    // Valores por defecto en caso de error
+    let data = { 
+        title: 'Nuevo mensaje', 
+        body: 'Tienes una notificación', 
+        url: '/' 
+    };
+    
+    try {
+        if (event.data) {
+            data = event.data.json();
+        }
+    } catch (e) {
+        console.error('Error parsing push data:', e);
+    }
 
-    self.registration.showNotification(data.title, {
+    const options = {
         body: data.body,
-        icon: "icons/icon-192.png",
-        badge: "icons/badge.png",
-        data: data.url || "/" // Agregar URL opcional para redirección
-    });
+        icon: data.icon || "icons/icon-192.png",
+        badge: data.badge || "icons/icon-192.png",
+        data: { url: data.url || "/" },
+        vibrate: [200, 100, 200],
+        tag: 'podcast-notification',
+        requireInteraction: false
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
 });
